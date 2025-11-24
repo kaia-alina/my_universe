@@ -3,7 +3,3 @@ body {
     overflow: hidden; /* Oculta barras de desplazamiento */
     background-color: #0d001a; /* Fondo muy oscuro, casi negro con un toque púrpura */
 }
-
-#galaxyCanvas {
-    display: block;
-}
