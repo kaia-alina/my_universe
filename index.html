@@ -17,10 +17,21 @@
              background:rgba(20,15,35,.35);border:1px solid rgba(255,255,255,.12);border-radius:12px;padding:8px;
              backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);color:#fff;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial}
     .player button{padding:8px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff}
-    .player input[type=file]{display:none}
+    /* Ocultamos el input original para que el label funcione como click */
+    .player input[type=file]{display:none} 
     .pill{position:fixed;top:10px;left:50%;transform:translateX(-50%);padding:6px 12px;border-radius:999px;
           background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);color:#fff;font:12px -apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial}
     .error{position:fixed;inset:auto 10px 70px 10px;background:#260015;color:#ffd9f7;border:1px solid #ff8ae5;border-radius:10px;padding:10px;font:12px system-ui;display:none;}
+
+    /* Estilo para el botón dentro del label */
+    .player-action-button {
+        padding:8px 12px;
+        border-radius:10px;
+        border:1px solid rgba(255,255,255,.2);
+        background:rgba(255,255,255,.08);
+        color:#fff;
+        cursor:pointer; /* Indica que es clickeable */
+    }
   </style>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
@@ -55,15 +66,27 @@ function showError(msg){ err.textContent = msg; err.style.display='block'; }
 // ====== AUDIO ======
 const audio = document.getElementById('audio');
 const playBtn = document.getElementById('playBtn');
-const pickBtn = document.getElementById('pickBtn');
-const pickFile = document.getElementById('pickFileLabel');
+
+// Usamos el ID del input que está dentro del <label>
+const pickFile = document.getElementById('pickFileLabel'); 
 
 playBtn.onclick = async () => {
-  try { if (audio.paused) { await audio.play(); playBtn.textContent='⏸︎'; } else { audio.pause(); playBtn.textContent='▶︎'; } }
-  catch(e){ showError('Si no suena, toca “Elegir canción” y selecciona tu MP3.'); }
+  try { 
+    if (audio.paused) { 
+        await audio.play(); 
+        playBtn.textContent='⏸︎'; 
+    } else { 
+        audio.pause(); 
+        playBtn.textContent='▶︎'; 
+    } 
+  }
+  catch(e){ 
+    showError('Si no suena, toca “Elegir canción” y selecciona tu MP3.'); 
+  }
 };
-pickBtn.onclick = () => pickFile.click();
-pickFile.onchange = () => {
+
+// La lógica de onchange se mantiene y ahora apunta al nuevo ID pickFileLabel
+pickFile.onchange = () => { 
   if (pickFile.files && pickFile.files[0]) {
     const url = URL.createObjectURL(pickFile.files[0]);
     audio.src = url; 
@@ -106,22 +129,22 @@ function setCam(){
 function makePrettyStarTexture(size=1024, count=2000) {
   const c = document.createElement('canvas'); c.width = c.height = size;
   const g = c.getContext('2d');
-  // subtle nebula backdrop (very dark purple radial)
+  // Fondo sutil de nebulosa (gradiente radial morado muy oscuro)
   const r = size/2;
   const bg = g.createRadialGradient(r,r, r*0.2, r,r, r);
-  bg.addColorStop(0,'#050010');
+  bg.addColorStop(0,'#050010'); // Casi negro
   bg.addColorStop(1,'#000000');
   g.fillStyle = bg; g.fillRect(0,0,size,size);
 
   for (let i=0;i<count;i++) {
     const x = Math.random()*size, y = Math.random()*size;
-    const base = Math.random()*0.7 + 0.3; // brightness
+    const base = Math.random()*0.7 + 0.3; // brillo
     const glow = g.createRadialGradient(x,y,0, x,y, Math.random()*2.2+1.6);
-    // color tilt towards lilac/blue
+    // Color de las estrellas inclinadas hacia el azul/morado
     const huePick = Math.random();
-    let colInner = 'rgba(255,255,255,'+(0.65*base)+')';
-    let colOuter = 'rgba(180,190,255,'+(0.12*base)+')';
-    if (huePick < 0.25) { colOuter = 'rgba(255,180,240,'+(0.12*base)+')'; }
+    let colInner = 'rgba(255,255,255,'+(0.65*base)+')'; // Blanco brillante en el centro
+    let colOuter = 'rgba(180,190,255,'+(0.12*base)+')'; // Azul-morado suave
+    if (huePick < 0.25) { colOuter = 'rgba(255,180,240,'+(0.12*base)+')'; } // Opción para un toque rosado/morado claro
     glow.addColorStop(0, colInner);
     glow.addColorStop(1, colOuter);
     g.fillStyle = glow; g.beginPath(); g.arc(x,y, Math.random()*1.2+0.6, 0, Math.PI*2); g.fill();
@@ -137,7 +160,6 @@ scene.add(bg);
 
 // Galaxy
 const galaxy = new THREE.Group(); scene.add(galaxy);
-// LÍNEA DE FRASES CORREGIDA: HUmbe-AURORA está ahora entre comillas.
 const phrases = ["Hermosa ✨", " Chokis 🍪", "Besitotos ♥️", "Mi Cielito 🌌", "Hermosota ✨", "Mi bella mujer 💜", "Mi Todo", "Me Encantas 🥰", " Kenii 🙄", "Te Amo💛", "Mi Canción Favorita 🎶", "Quedate conmigo", "Tus ojos siempre me alivian la existencia 👑", "d^=b[,7'", "Na", "Ra", "K", "", "Scrubb_ให้เธอ", "HUmbe-AURORA", "Mi Sueño", "Mi Pensamiento Favorito", "Mi Bombom", "Videoclub-roi", "Te Amo Infinitamente ♾️"];
 const phraseCount = Math.max(phrases.length * 6, 180);
 const arms = 5, radius = 82, maxH = 22;
@@ -147,8 +169,12 @@ function makeTextTexture(text, size=48){
   const g=c.getContext('2d'); g.clearRect(0,0,c.width,c.height);
   g.font='800 '+size+'px -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial';
   g.textAlign='center'; g.textBaseline='middle';
-  g.shadowColor='rgba(210,140,255,0.95)'; g.shadowBlur=24;
-  g.fillStyle='rgba(255,240,255,0.98)'; g.fillText(text,c.width/2,c.height/2);
+  // CAMBIO DE COLOR: Sombra del texto a un azul-morado más intenso
+  g.shadowColor='rgba(100,100,255,0.95)'; // Azul vibrante con toque morado
+  g.shadowBlur=24;
+  // CAMBIO DE COLOR: Color principal del texto a blanco-azulado
+  g.fillStyle='rgba(230,240,255,0.98)'; // Blanco con un tinte azul muy sutil
+  g.fillText(text,c.width/2,c.height/2);
   return new THREE.CanvasTexture(c);
 }
 
@@ -170,27 +196,33 @@ for(let i=0;i<starCount;i++){ const ang=Math.random()*Math.PI*2, dist=Math.rando
   const y=(Math.random()-0.5)*36*Math.pow(1-Math.min(dist,radius)/radius,1.5);
   pos[i*3]=Math.cos(ang)*dist; pos[i*3+1]=y; pos[i*3+2]=Math.sin(ang)*dist; }
 geom.setAttribute('position', new THREE.BufferAttribute(pos,3));
-galaxy.add(new THREE.Points(geom, new THREE.PointsMaterial({ color:0xffffff, size:0.28, transparent:true, opacity:0.65, blending:THREE.AdditiveBlending })));
+// CAMBIO DE COLOR: Estrellas de la galaxia a un azul-morado suave
+galaxy.add(new THREE.Points(geom, new THREE.PointsMaterial({ color:0xB0C4DE, size:0.28, transparent:true, opacity:0.65, blending:THREE.AdditiveBlending }))); // Azul pizarra suave
 
 // Black hole (3D core + ring + extended brighter halo)
 const coreR=12;
 const coreTexCanvas=document.createElement('canvas'); coreTexCanvas.width=coreTexCanvas.height=256;
 const cg=coreTexCanvas.getContext('2d'); const grd=cg.createRadialGradient(128,128,10,128,128,128);
-grd.addColorStop(0,'#140018'); grd.addColorStop(0.6,'#090012'); grd.addColorStop(1,'#000'); cg.fillStyle=grd; cg.arc(128,128,128,0,Math.PI*2); cg.fill();
+// CAMBIO DE COLOR: Gradiente del core para que sea más azul-negro/morado oscuro
+grd.addColorStop(0,'#0C001C'); // Azul muy oscuro, casi negro
+grd.addColorStop(0.6,'#070018'); // Azul oscuro-morado
+grd.addColorStop(1,'#000'); // Negro puro
+cg.fillStyle=grd; cg.arc(128,128,128,0,Math.PI*2); cg.fill();
 const core=new THREE.Mesh(new THREE.SphereGeometry(coreR,64,64), new THREE.MeshBasicMaterial({ map:new THREE.CanvasTexture(coreTexCanvas) }));
 core.renderOrder=1; scene.add(core);
 
-const photonRing=new THREE.Mesh(new THREE.RingGeometry(coreR*1.05, coreR*1.18, 128), new THREE.MeshBasicMaterial({ color:0xEAAEFF, transparent:true, opacity:0.95, side:THREE.DoubleSide }));
+// CAMBIO DE COLOR: Anillo de fotones a un azul oscuro casi morado
+const photonRing=new THREE.Mesh(new THREE.RingGeometry(coreR*1.05, coreR*1.18, 128), new THREE.MeshBasicMaterial({ color:0x2C004F, transparent:true, opacity:0.95, side:THREE.DoubleSide })); // Azul-morado oscuro
 photonRing.rotation.x=-Math.PI/2; photonRing.renderOrder=0.5; scene.add(photonRing);
 
 function makeHaloTexture(size=1024, inner=0.45){
   const c=document.createElement('canvas'); c.width=c.height=size; const g=c.getContext('2d'); const r=size/2;
   const grd=g.createRadialGradient(r,r,r*inner, r,r,r);
-  // brighter, clearer colors
-  grd.addColorStop(0.0,'rgba(255,200,240,0.45)');
-  grd.addColorStop(0.35,'rgba(220,180,255,0.35)');
-  grd.addColorStop(0.7,'rgba(160,200,255,0.28)');
-  grd.addColorStop(1,'rgba(0,0,0,0)');
+  // CAMBIO DE COLOR: Halo a tonos más azules y morados oscuros
+  grd.addColorStop(0.0,'rgba(100,100,255,0.45)'); // Azul brillante en el centro
+  grd.addColorStop(0.35,'rgba(80,80,200,0.35)'); // Azul un poco más oscuro
+  grd.addColorStop(0.7,'rgba(60,60,150,0.28)'); // Azul oscuro
+  grd.addColorStop(1,'rgba(0,0,0,0)'); // Transparente
   g.fillStyle=grd; g.fillRect(0,0,size,size); const tex=new THREE.CanvasTexture(c); tex.needsUpdate=true; return tex;
 }
 const haloPlane=new THREE.Mesh(new THREE.PlaneGeometry(320,320), new THREE.MeshBasicMaterial({ map:makeHaloTexture(1024,0.45), transparent:true, depthWrite:false, blending:THREE.AdditiveBlending, opacity:0.9 }));
