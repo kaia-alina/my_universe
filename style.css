@@ -1,5 +1,13 @@
 body {
+    /* Elimina el margen por defecto del navegador */
     margin: 0;
-    overflow: hidden; /* Oculta barras de desplazamiento */
-    background-color: #0d001a; /* Fondo muy oscuro, casi negro con un toque púrpura */
+    
+    /* Oculta las barras de desplazamiento para que solo se vea la galaxia */
+    overflow: hidden; 
+    
+    /* Color de fondo para cuando la escena 3D no está cargada o por si acaso */
+    background-color: #0d001a; 
 }
+
+/* El elemento canvas de Three.js es añadido directamente al <body>, 
+   pero estas reglas aseguran que el body no tenga espacio extra. */
