@@ -3,11 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Galaxia Interactiva</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Galaxia Interactiva 3D</title>
+    <link rel="stylesheet" href="style.css"> 
 </head>
 <body>
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/0.158.0/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.158.0/examples/js/controls/OrbitControls.js"></script> <script src="script.js"></script>
+    
+    <script type="module">
+        // Importa OrbitControls y hazlo global (adjúntalo a la ventana)
+        import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.158.0/examples/jsm/controls/OrbitControls.js';
+        window.OrbitControls = OrbitControls;
+        
+        // Carga tu script.js como módulo para que pueda usar la importación si es necesario
+        import './script.js';
+    </script>
 </body>
 </html>
