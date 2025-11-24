@@ -67,8 +67,9 @@ function showError(msg){ err.textContent = msg; err.style.display='block'; }
 const audio = document.getElementById('audio');
 const playBtn = document.getElementById('playBtn');
 
-// Usamos el ID del input que está dentro del <label>
+// *** ESTA LÍNEA FUE EL ERROR ANTERIOR. AHORA BUSCA EL ID CORRECTO ***
 const pickFile = document.getElementById('pickFileLabel'); 
+// *** ELIMINAMOS la búsqueda de pickBtn (Línea 65)
 
 playBtn.onclick = async () => {
   try { 
@@ -84,6 +85,7 @@ playBtn.onclick = async () => {
     showError('Si no suena, toca “Elegir canción” y selecciona tu MP3.'); 
   }
 };
+
 
 // La lógica de onchange se mantiene y ahora apunta al nuevo ID pickFileLabel
 pickFile.onchange = () => { 
