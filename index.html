@@ -33,9 +33,13 @@
 
 <div class="player">
   <button id="playBtn">▶︎</button>
-  <span style="font-size:12px;opacity:.9">Elije tu cancion  <b>cancion.mp3</b>Detalles Mr<b>💙🌹♥️</b> (Reproductor Mr”)</span>
-  <input type="file" id="pickFile" accept="audio/*">
-  <button id="pickBtn">Elegir canción</button>
+  <span style="font-size:12px;opacity:.9">Elije tu cancion  <b>dime.mp3</b> | Reproductor Mr<b>💙🌹♥️</b></span>
+  
+    <label for="pickFileLabel">
+    <input type="file" id="pickFileLabel" accept="audio/*" style="display:none;"> 
+    <button type="button" class="player-action-button">Elegir canción</button>
+  </label>
+
   <audio id="audio" preload="none">
     <source src="dime.mp3" type="audio/mpeg">
   </audio>
@@ -52,7 +56,7 @@ function showError(msg){ err.textContent = msg; err.style.display='block'; }
 const audio = document.getElementById('audio');
 const playBtn = document.getElementById('playBtn');
 const pickBtn = document.getElementById('pickBtn');
-const pickFile = document.getElementById('pickFile');
+const pickFile = document.getElementById('pickFileLabel');
 
 playBtn.onclick = async () => {
   try { if (audio.paused) { await audio.play(); playBtn.textContent='⏸︎'; } else { audio.pause(); playBtn.textContent='▶︎'; } }
@@ -62,7 +66,8 @@ pickBtn.onclick = () => pickFile.click();
 pickFile.onchange = () => {
   if (pickFile.files && pickFile.files[0]) {
     const url = URL.createObjectURL(pickFile.files[0]);
-    audio.src = url; audio.play().then(()=> playBtn.textContent='⏸︎').catch(()=>{});
+    audio.src = url; 
+    audio.play().then(()=> playBtn.textContent='⏸︎').catch(()=>{});
   }
 };
 
