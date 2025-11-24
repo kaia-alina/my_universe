@@ -1,116 +1,195 @@
-const canvas = document.getElementById('galaxyCanvas');
-const ctx = canvas.getContext('2d');
+// --- CONFIGURACIÓN BÁSICA DE THREE.JS ---
+let scene, camera, renderer, controls;
+let galaxyParticles, centerOrb;
+const heartParticles = []; // Array para almacenar las partículas de corazón
 
-// Ajustar el tamaño del canvas al de la ventana
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-
-// --- CONFIGURACIÓN DE LA GALAXIA ---
-const numStars = 500;
-const stars = [];
-const centerOrb = {
-    x: canvas.width / 2,
-    y: canvas.height / 2,
-    radius: 40,
-    color: 'rgba(150, 0, 255, 0.8)', // Púrpura brillante
-    angle: 0
-};
-
-// --- FUNCIÓN PARA CREAR UNA ESTRELLA ---
-class Star {
-    constructor() {
-        // Posición aleatoria, concentrándose cerca del centro para el efecto galáctico
-        this.x = centerOrb.x + (Math.random() - 0.5) * canvas.width * 0.8;
-        this.y = centerOrb.y + (Math.random() - 0.5) * canvas.height * 0.8;
-        
-        // Calcular la distancia al centro para determinar la velocidad de órbita
-        this.distance = Math.sqrt((this.x - centerOrb.x) ** 2 + (this.y - centerOrb.y) ** 2);
-        
-        // Velocidad de órbita: más lento cuanto más lejos esté
-        this.velocity = (100 / this.distance) * 0.001 + 0.0005; // Ajusta el 0.001 y 0.0005 para la velocidad
-        
-        this.radius = Math.random() * 1.5 + 0.5; // Tamaño de la estrella
-        this.opacity = Math.random();
-        
-        // Ángulo inicial
-        this.angle = Math.atan2(this.y - centerOrb.y, this.x - centerOrb.x);
-    }
-
-    // Dibujar la estrella
-    draw() {
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
-        ctx.fill();
-    }
-
-    // Actualizar la posición para la órbita
-    update() {
-        this.angle += this.velocity; // Incrementar el ángulo para mover la estrella
-        
-        // Recalcular la posición usando el ángulo y la distancia
-        this.x = centerOrb.x + Math.cos(this.angle) * this.distance;
-        this.y = centerOrb.y + Math.sin(this.angle) * this.distance;
-        
-        // Efecto de "parpadeo" sutil
-        this.opacity = 0.5 + Math.sin(Date.now() * 0.001 + this.distance * 0.01) * 0.5;
-
-        this.draw();
-    }
-}
-
-// --- INICIALIZAR ESTRELLAS ---
+// --- INICIALIZACIÓN DE LA ESCENA ---
 function init() {
+    // 1. Escena
+    scene = new THREE.Scene();
+
+    // 2. Cámara (PerspectiveCamera)
+    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.z = 200; 
+
+    // 3. Renderer
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setClearColor(0x0d001a); 
+    document.body.appendChild(renderer.domElement);
+
+    // 4. Controles de Órbita (Navegación)
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true; 
+    controls.dampingFactor = 0.05;
+    controls.screenSpacePanning = false; 
+    controls.maxDistance = 500; 
+    controls.minDistance = 20; 
+
+    // 5. Luces
+    const ambientLight = new THREE.AmbientLight(0x404040, 2); 
+    scene.add(ambientLight);
+    const pointLight = new THREE.PointLight(0xff00ff, 1, 300); // Luz púrpura en el centro
+    scene.add(pointLight);
+
+    // --- CREAR EL ORBE CENTRAL ---
+    const orbGeometry = new THREE.SphereGeometry(30, 32, 32);
+    const orbMaterial = new THREE.MeshBasicMaterial({ color: 0x9900ff }); 
+    centerOrb = new THREE.Mesh(orbGeometry, orbMaterial);
+    scene.add(centerOrb);
+
+    // --- CREAR LA GALAXIA DE PARTÍCULAS ---
+    createGalaxy();
+
+    // --- EVENTOS ---
+    window.addEventListener('resize', onWindowResize);
+    document.addEventListener('click', onDocumentClick); 
+    document.addEventListener('touchstart', onDocumentTouch); 
+}
+
+// --- FUNCIÓN PARA CREAR LA GALAXIA DE PARTÍCULAS ---
+function createGalaxy() {
+    const numStars = 5000;
+    const galaxyRadius = 150;
+    const armThickness = 20;
+    const centerDensity = 0.8; 
+
+    const positions = new Float32Array(numStars * 3);
+    const colors = new Float32Array(numStars * 3);
+
+    const color = new THREE.Color();
+    const white = new THREE.Color(0xffffff);
+    const purpleEnd = new THREE.Color(0x8a2be2); 
+
     for (let i = 0; i < numStars; i++) {
-        stars.push(new Star());
+        let x, y, z;
+        const radius = Math.random() * galaxyRadius;
+        const angle = Math.random() * Math.PI * 2; 
+        
+        // Distribución en espiral / disco
+        const spiralArmOffset = 0.5 * Math.PI * (radius / galaxyRadius); 
+        x = radius * Math.cos(angle + spiralArmOffset);
+        y = radius * Math.sin(angle + spiralArmOffset);
+        z = (Math.random() - 0.5) * armThickness * (1 - radius / galaxyRadius * centerDensity); 
+
+        // Aleatoriedad
+        x += (Math.random() - 0.5) * 10;
+        y += (Math.random() - 0.5) * 10;
+        z += (Math.random() - 0.5) * 10;
+
+        positions[i * 3] = x;
+        positions[i * 3 + 1] = y;
+        positions[i * 3 + 2] = z;
+
+        // Coloración: más púrpuras cerca del centro, más blancas afuera
+        const distanceToCenter = Math.sqrt(x * x + y * y + z * z);
+        const colorLerpFactor = distanceToCenter / galaxyRadius;
+        color.lerpColors(purpleEnd, white, colorLerpFactor);
+        
+        colors[i * 3] = color.r;
+        colors[i * 3 + 1] = color.g;
+        colors[i * 3 + 2] = color.b;
+    }
+
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+    const material = new THREE.PointsMaterial({
+        size: 2, 
+        vertexColors: true, 
+        blending: THREE.AdditiveBlending, 
+        transparent: true,
+        opacity: 0.9
+    });
+
+    galaxyParticles = new THREE.Points(geometry, material);
+    scene.add(galaxyParticles);
+}
+
+// --- FUNCIÓN PARA CREAR UNA PARTÍCULA DE CORAZÓN ---
+function createHeartParticle(x, y) {
+    // Geometría del Corazón
+    const heartShape = new THREE.Shape();
+    heartShape.moveTo(0, 0.7);
+    heartShape.bezierCurveTo(0.7, 1.2, 1.2, 0.6, 0, 0);
+    heartShape.bezierCurveTo(-1.2, 0.6, -0.7, 1.2, 0, 0.7);
+
+    const geometry = new THREE.ShapeGeometry(heartShape);
+    const material = new THREE.MeshBasicMaterial({ color: 0xff0000, transparent: true, opacity: 1 });
+    const heart = new THREE.Mesh(geometry, material);
+
+    // Proyectar el punto de clic de 2D a 3D
+    const vector = new THREE.Vector3(
+        (x / window.innerWidth) * 2 - 1,
+        -(y / window.innerHeight) * 2 + 1,
+        0.5
+    );
+    vector.unproject(camera); 
+
+    const dir = vector.sub(camera.position).normalize();
+    const distance = -camera.position.z / dir.z;
+    const pos = camera.position.clone().add(dir.multiplyScalar(distance));
+    
+    heart.position.copy(pos);
+    heart.scale.set(0.5, 0.5, 0.5); 
+    
+    // Propiedades de la partícula
+    heart.velocity = new THREE.Vector3((Math.random() - 0.5) * 0.5, (Math.random() - 0.5) * 0.5, (Math.random() - 0.5) * 0.5);
+    heart.life = 60; 
+    
+    heartParticles.push(heart);
+    scene.add(heart);
+}
+
+// --- MANEJADORES DE EVENTOS ---
+function onWindowResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+function onDocumentClick(event) {
+    createHeartParticle(event.clientX, event.clientY);
+}
+
+function onDocumentTouch(event) {
+    if (event.touches.length > 0) {
+        // Usar la primera posición de toque
+        createHeartParticle(event.touches[0].clientX, event.touches[0].clientY);
     }
 }
 
-// --- DIBUJAR EL ORBE CENTRAL ---
-function drawCenterOrb() {
-    // Sombra/resplandor púrpura
-    ctx.shadowBlur = 40;
-    ctx.shadowColor = 'rgb(150, 0, 255)';
-    
-    ctx.beginPath();
-    ctx.arc(centerOrb.x, centerOrb.y, centerOrb.radius, 0, Math.PI * 2);
-    ctx.fillStyle = centerOrb.color;
-    ctx.fill();
-    
-    // Quitar la sombra para el resto del dibujo
-    ctx.shadowBlur = 0;
-}
-
-// --- BUCLE PRINCIPAL DE ANIMACIÓN ---
+// --- BUCLE DE ANIMACIÓN ---
 function animate() {
-    // La función requestAnimationFrame llama a 'animate' en el siguiente cuadro
-    requestAnimationFrame(animate); 
+    requestAnimationFrame(animate);
 
-    // Limpiar el canvas en cada cuadro. 
-    // Usamos una pequeña opacidad para un efecto de "rastro" sutil.
-    ctx.fillStyle = 'rgba(13, 0, 26, 0.1)'; 
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    controls.update(); 
 
-    // Dibujar el orbe central
-    drawCenterOrb();
+    // Rotar el orbe central
+    centerOrb.rotation.y += 0.005;
+    centerOrb.rotation.x += 0.002;
+    
+    // Rotar ligeramente la galaxia para el efecto de movimiento constante
+    galaxyParticles.rotation.y += 0.0005; 
 
-    // Actualizar y dibujar todas las estrellas
-    stars.forEach(star => {
-        star.update();
-    });
+    // Actualizar y eliminar partículas de corazón
+    for (let i = heartParticles.length - 1; i >= 0; i--) {
+        const heart = heartParticles[i];
+        heart.position.add(heart.velocity);
+        heart.material.opacity -= 0.01; 
+        heart.scale.multiplyScalar(1.02); 
+
+        if (heart.material.opacity <= 0 || heart.life <= 0) {
+            scene.remove(heart);
+            heartParticles.splice(i, 1);
+        }
+        heart.life--;
+    }
+
+    renderer.render(scene, camera);
 }
 
-// Iniciar la creación de estrellas y el bucle de animación
+// --- INICIAR TODO ---
 init();
 animate();
-
-// Manejar el redimensionamiento de la ventana
-window.addEventListener('resize', () => {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    // Reiniciar las estrellas para ajustarse al nuevo tamaño
-    stars.length = 0;
-    centerOrb.x = canvas.width / 2;
-    centerOrb.y = canvas.height / 2;
-    init();
-});
